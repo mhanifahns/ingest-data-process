@@ -1,0 +1,37 @@
+{
+  "name": "googleplay_client",
+  "version": "1.0.0",
+  "description": "Google Play Client API",
+  "main": "webserver.js",
+  "scripts": {
+    "start": "NODE_ENV=production node start.js",
+    "dev": "NODE_ENV=development node start.js",
+    "webserver": "NODE_ENV=production node webserver.js -i 4",
+    "dev-webserver": "NODE_ENV=development nodemon webserver.js -i 4"
+  },
+  "author": "fparanso <paranso@datanusantara.com>",
+  "license": "ISC",
+  "dependencies": {
+    "@google-cloud/storage": "^4.7.0",
+    "axios": "^0.19.2",
+    "body-parser": "^1.19.0",
+    "chalk": "^3.0.0",
+    "cors": "^2.8.5",
+    "csvtojson": "^2.0.10",
+    "elasticsearch": "^16.7.2",
+    "express": "^4.17.1",
+    "fast-csv": "^4.3.6",
+    "helmet": "^3.23.3",
+    "install": "^0.13.0",
+    "lodash": "^4.17.21",
+    "moment": "^2.29.1",
+    "mongoose": "^5.11.11",
+    "multer": "^1.4.2",
+    "phone-id.js": "^0.1.5",
+    "random-pick-name": "^1.0.3",
+    "request": "^2.88.2",
+    "request-promise": "^4.2.6",
+    "shelljs": "^0.8.4",
+    "swagger-ui-express": "^4.1.6"
+  }
+}

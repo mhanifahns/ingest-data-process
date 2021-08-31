@@ -1,0 +1,4 @@
+module.exports = {
+    DataGeolocation: [{"kabko":"KAB. SERANG","lat":-6.1397,"long":106.0405},{"kabko":"KAB. TANGERANG","lat":-6.1872,"long":106.4877},{"kabko":"KOTA CILEGON","lat":-6.0025,"long":106.0111},{"kabko":"KOTA SERANG","lat":-6.1104,"long":106.164},{"kabko":"KOTA TANGERANG","lat":-6.2024,"long":106.6527},{"kabko":"KOTA TANGERANG SELATAN","lat":-6.2835,"long":106.7113},{"kabko":"KAB. BOGOR","lat":-6.5518,"long":106.6291},{"kabko":"KAB. CIAMIS","lat":-7.3321,"long":108.3493},{"kabko":"KAB. CIANJUR","lat":-7.358,"long":107.1957},{"kabko":"KOTA JAKARTA","lat":-6.1751,"long":106.865},{"kabko":"KAB. ADMINISTRASI KEPULAUAN SERIBU","lat":-5.6122,"long":106.617}]
+ 
+  }
