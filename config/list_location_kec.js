@@ -5336,8 +5336,8 @@ module.exports = {
           "kecamatan_code": 81,
           "lat": 1.1433239,
           "lng": 104.0362587,
-          "province_name": "KEPULAUAN RIAU",
-          "kabupaten_name": "B A T A M",
+          "province_name": "BATAM",
+          "kabupaten_name": "BATAM",
           "kecamatan_name": "BENGKONG"
         },
         {
@@ -25966,7 +25966,7 @@ module.exports = {
           "kecamatan_code": 211,
           "lat": -8.306487,
           "lng": 112.2324406,
-          "province_name": "JAWA TIMUR",
+          "province_name": "BANTEN",
           "kabupaten_name": "SERANG",
           "kecamatan_name": "PULO AMPEL"
         },

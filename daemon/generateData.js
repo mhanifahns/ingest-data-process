@@ -1,82 +1,16 @@
-// Indexing active user from google play console report to ES.
-const fastCSV = require('fast-csv');
-const randomName = require('random-pick-name')
-const fs = require('fs');
-const phoneid = require('phone-id.js')
-const listLoc = require('../config/list_location')
-const listLocJawa = require('../config/list_location_jawa')
-const listLocJakarta = require('../config/list_location_jakarta')
-const listLocKec = require('../config/list_location_kec')
-const listProvider = require('../config/list_provider')
-const moment = require('moment');
-const _ = require('lodash');
-const elasticsearch = require('../config/elasticsearch');
+
+const database = require('../config/database');
 const dataFunc = require('../helpers/data');
-const esClientConn = require('../connectors/elasticsearch.conn');
-const {
-    createIndex,
-    createMapping,
-    putIndex,
-    DeleteActiveByNIK,
-    DeleteIndexByDate
-} = require('../helpers/elastic.helper');
-const { DataGeolocation } = require('../config/list_location');
-const { uniqBy } = require('lodash');
-
-function generateProvider() {
-    var provider = listProvider.provider[getRandomInt(0, listProvider.provider.length)]
-
-    return provider;
-
-
-}
-
-function getRandomInt(min, max) {
-    return Math.floor(Math.random() * (max - min)) + min;
-}
-
-function generateGeolocationKecamatan() {
-    var randomIndex = getRandomInt(0, listLocKec.DataGeolocation.length + 1)
-
-    var location = {
-        "lat": listLocKec.DataGeolocation[randomIndex].lat,
-        "lon": listLocKec.DataGeolocation[randomIndex].lng
+const knex = require('knex')({
+    client: 'mysql',
+    connection: {
+        host: database.mysql.host,
+        user: database.mysql.user,
+        password: database.mysql.password,
+        database: database.mysql.database
     }
-    return location
-}
-
-function generateGeolocation() {
-    var randomIndex = getRandomInt(0, listLoc.DataGeolocation.length + 1)
-
-    var location = {
-        "lat": listLoc.DataGeolocation[randomIndex].lat,
-        "lon": listLoc.DataGeolocation[randomIndex].long
-    }
-    return location
-}
-
-function generateGeolocationJakarta() {
-    var randomIndex = getRandomInt(0, listLocJakarta.DataGeolocation.length + 1)
-    var location = {
-        "lat": listLocJakarta.DataGeolocation[randomIndex].lat,
-        "lon": listLocJakarta.DataGeolocation[randomIndex].long
-    }
-    return location
-}
-
-async function generateGeolocationJawa() {
-    var randomIndex = await getRandomInt(0, listLocJawa.DataGeolocation.length + 1)
-    var location = {
-        "lat": listLocJawa.DataGeolocation[randomIndex].lat,
-        "lon": listLocJawa.DataGeolocation[randomIndex].long
-    }
-    if (typeof listLocJawa.DataGeolocation[randomIndex].lat == 'undefined') {
-
-        console.log(listLocJawa.DataGeolocation[randomIndex].kabko)
-    }
-    console.log(listLocJawa.DataGeolocation[randomIndex])
-    return location
-}
+});
+const moment = require('moment')
 
 /**
  * Get active user from csv file
@@ -86,83 +20,67 @@ async function generateGeolocationJawa() {
  */
 async function ProcessData() {
 
-    var dataIndex = []
-    var listNIK= []
     // date counter will be start same as startDate.
     // && listLocKec.DataGeolocation[index].province_name == 'DKI JAKARTA'
-
-    var Data = await dataFunc.getDataSortAgre('nik-sample', {}, { _id: -1 }, 88000, 9000)
-    var count = 0
+    
+    var dataKTP =[]
+    var Process = await dataFunc.getDataSortAgre('proc',{proc:'ktp'})
+    var Data = await dataFunc.getDataSortAgre('nik-sample', {}, { _id: -1 }, Process[0].skip, 9000)
     for (const iterator of Data) {
-        var index = _.findIndex(listLocKec.DataGeolocation, { kecamatan_name: iterator.NAMA_KEC });
-        if (index != -1 ) {
-            var provider = await generateProvider()
-            if (provider == 'xl') {
-                var number = await phoneid.xl(8, false)
-
-            } else if (provider == 'three') {
-                var number = await phoneid.three(8, false)
-            }
-            else if (provider == 'telkomsel') {
-                var number = await phoneid.telkomsel(8, false)
-            }
-            else if (provider == 'smartfren') {
-                var number = await phoneid.smartfren(8, false)
-            }
-            else if (provider == 'indosat') {
-                var number = await phoneid.indosat(8, false)
-            }
-            else if (provider == 'axis') {
-                var number = await phoneid.axis(8, false)
-            }
-            Data[count].PHONE_NUMBER = number
-            Data[count].CLEAN = true
-            Data[count].JENIS_KLMIN = iterator.JENIS_KLMIN.toUpperCase()
-            Data[count].PROVIDER = provider
-            var location = {
-                "lat": listLocKec.DataGeolocation[index].lat,
-                "lon": listLocKec.DataGeolocation[index].lng
-            }
-            Data[count].DEMOGRAPHY_GEOLOCATION = location
-            Data[count].DATE = moment().toDate()
-            if (typeof iterator.TGL_LHR != 'undefined' && iterator.TGL_LHR != null && iterator.TGL_LHR != '') {
-                Data[count].TGL_LHR = moment(iterator.TGL_LHR).toDate()
-            }
-            var query = {
-                _id:iterator._id
-            }
-            var set = {
-                $set:{
-                    PHONE_NUMBER:number,
-                    track:1
-                }
-            }
-            Data[count]._id = iterator._id.toString()
-            dataIndex.push(Data[count])
-            listNIK.push(Data[count].NIK)
-            
-            await dataFunc.updateData('nik-sample',query,set)
+        var data ={
+            Nama:iterator.NAMA_LGKP,
+            NIK:iterator.NIK.replace('EKTP_',''),
+            Foto_KTP:null,
+            Tempat_Lahir:iterator.TMPT_LHR,
+            Tanggal_Lahir:moment(iterator.TGL_LHR,'DD-MM-YYYY').toDate(),
+            Jenis_Kelamin:iterator.JENIS_KLMIN,
+            Alamat:iterator.ALAMAT,
+            Gol_Darah:iterator.GOL_DARAH,
+            Agama:iterator.AGAMA,
+            Kewarganegaraan:'WNI',
+            Client_Key:'2da3c6256237e6aa70b9d42e953176c51628135286261',
+            Kabupaten:iterator.NAMA_KAB,
+            Kecamatan:iterator.NAMA_KEC,
+            Kelurahan:iterator.NAMA_KEL,
+            Provinsi:iterator.NAMA_PROP,
+            Nama_Lengkap_Ayah:iterator.NAMA_LGKP_AYAH,
+            Nama_Lengkap_Ibu:iterator.NAMA_LGKP_IBU,
+            Kode_Pos:iterator.KODE_POS.toString(),
+            Dusun:iterator.DUSUN,
+            Pekerjaan:iterator.PEKERJAAN,
+            No_KK:iterator.NO_KK.toString(),
+            RT:iterator.NO_RT.toString(),
+            RW:iterator.NO_RW.toString(),
+            Created_At:moment().toDate(),
+            Enroll_Status:"Done"
         }
-        count++
+        await knex('aph_personal_data').insert(data)
     }
-    let indexName = 'people_demography'
-
+    var updateSkip = Process[0].skip+9000
+    var query = {
+        proc:'ktp'
+    }
+    var set = {
+        $set:{
+            skip:updateSkip
+        }
+    }
+    await dataFunc.updateData('proc',query,set)
+    console.log('Done')
     try {
-        var dataClean = _.uniqBy(dataIndex,'NIK')
-        console.log('Delete NIK first')
-        await DeleteActiveByNIK(listNIK,indexName)
-        await createIndex(esClientConn, indexName);
-        console.log(`create mapping ` + indexName);
-        await createMapping(esClientConn, indexName, elasticsearch.ktp.mapping);
-        console.log('input new data')
-        await putIndex(esClientConn, indexName, dataClean);
+
     } catch (error) {
         throw error;
     }
-
-    console.log('finish process Google Play Console data total :' + dataClean.length)
     return true;
 }
 
 
-ProcessData()
+
+ProcessData().then(result => {
+    process.exit();
+  }).catch(err => {
+    logger.error('Something went wrong during data sync.');
+    console.error(err);
+    process.exit();
+  });
